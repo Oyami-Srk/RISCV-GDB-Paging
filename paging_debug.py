@@ -1,5 +1,6 @@
 # Usage: (gdb) so paging_debug.py
 #        (gdb) help paging
+#        (gdb) help v2p
 
 import gdb
 
@@ -17,7 +18,19 @@ level_total_size = [
 ]
 
 show_invalid = False
+use_utf8 = True
 
+if not use_utf8:
+    normal_line = '|  '
+    branch_line = '|- '
+    type_separator = ' | '
+else:
+    normal_line = '│  '
+    branch_line = '├─ '
+    type_separator = ' │ '
+
+u64 = gdb.lookup_type('unsigned long long')
+u64p = u64.pointer()
 
 def print_type(type, end=' '):
     if type & 0b1:
@@ -65,10 +78,10 @@ def parse_page_table(pgdir: gdb.Value, level: int, offset: int):
                 entry_size = level_total_size[level + 1]
                 start = offset + id * entry_size
                 pa = gdb.Value(
-                    pte_ppn * PAGE_SIZE).cast(gdb.lookup_type("unsigned long long *"))
+                    pte_ppn * PAGE_SIZE).cast(u64p)
                 if R == W == X == 0:
                     # Dir Entry
-                    print("│  " * (level) + "├", end='')
+                    print(normal_line * (level) + branch_line, end='')
                     print(f"Directory @ 0x{format(int(pa), 'X')}")
                     parse_page_table(pa, level + 1, start)
                     last_start = last_end = last_type = last_pa = 0
@@ -84,12 +97,12 @@ def parse_page_table(pgdir: gdb.Value, level: int, offset: int):
                     else:
                         # Not continue
                         if last_continue:
-                            print("│  " * (level) + "├", end='')
+                            print(normal_line * (level) + branch_line, end='')
                             print(
                                 f"0x{format(last_start, 'X')} ~ 0x{format(last_end, 'X')} => ", end='')
                             print(
                                 f"0x{format(last_pa, 'X')} ~ 0x{format(last_pa + (last_end - last_start), 'X')}", end='')
-                            print(' | ', end='')
+                            print(type_separator, end='')
                             print_type(last_type)
                             print()
                         last_start = start
@@ -99,12 +112,12 @@ def parse_page_table(pgdir: gdb.Value, level: int, offset: int):
                         last_continue = True
 
     if last_continue:
-        print("│  " * (level) + "├", end='')
+        print(normal_line * (level) + branch_line, end='')
         print(
             f"0x{format(last_start, 'X')} ~ 0x{format(last_end, 'X')} => ", end='')
         print(
             f"0x{format(last_pa, 'X')} ~ 0x{format(last_pa + (last_end - last_start), 'X')}", end='')
-        print(' | ', end='')
+        print(type_separator, end='')
         print_type(last_type)
         print()
 
@@ -129,7 +142,7 @@ Example:
         args = gdb.string_to_argv(args)
         if len(args) == 0 or args[0] == "satp":
             satp = gdb.selected_frame().read_register('satp')
-            satp = int(satp.cast(gdb.lookup_type("unsigned long long")))
+            satp = int(satp.cast(u64))
             satp = format(satp, '064b')[::-1]
             satp_ppn = int(satp[0:44][::-1], 2)
             satp_asid = int(satp[44:60][::-1], 2)
@@ -142,14 +155,14 @@ Example:
                 print("Only support SV39 paging mode with mode 8.")
                 return
             root_pgdir = gdb.Value(
-                int(root_pgdir)).cast(gdb.lookup_type("unsigned long long *"))
+                int(root_pgdir)).cast(u64p)
         else:
             if 'x' in args[0] or 'X' in args[0]:
                 root_pgdir = gdb.Value(
-                    int(args[0], 16)).cast(gdb.lookup_type("unsigned long long *"))
+                    int(args[0], 16)).cast(u64p)
             else:
                 root_pgdir = gdb.Value(
-                    int(args[0], 10)).cast(gdb.lookup_type("unsigned long long *"))
+                    int(args[0], 10)).cast(u64p)
         parse_page_table(root_pgdir, 0, 0)
 
 
