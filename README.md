@@ -1,16 +1,24 @@
 # RISCV-GDB-Paging
-**SV39** Paging Debug tool for GDB using python
+**SV39** Paging Debug tool for GDB using python and guile
 
 Reference: [riscv-privileged-v1.10.pdf](https://riscv.org/wp-content/uploads/2017/05/riscv-privileged-v1.10.pdf)
 
 ## Usage:
-Place `paging_debug.py` inside your project root.
+Place `paging_debug.py` or all the `.scm` files inside your project root.
 
 Inside gdb console:
 
 ```(gdb) so paging_debug.py```
 
+or
+
+```(gdb) so paging_debug.scm```
+
 Then you can type `help paging` or `help v2p` to show the help message.
+
+If you have any question, please search for `GDB Extension`.
+
+> Note: I have no SV48 codes and emulator, so `SV48.scm` is not tested.
 
 ### Paging Table Inspector
 ```
