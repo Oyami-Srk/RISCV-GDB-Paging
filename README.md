@@ -58,3 +58,12 @@ paging:
 v2p:
 
 ![v2p](img/v2p.png)
+
+
+## Todo
+
+After finished oscomp (or a debug routine is hard for me), I may implement features list below:
+
+1. Processes debug for custom os (flexible via user defines debug symbol, like FreeRTOS GDB).
+2. Ecall tracing
+3. named bitfield for register
