@@ -8,12 +8,13 @@
 
 (use-modules (utils))
 
-(define arch (string-append 
-                (gdb:arch-name (gdb:current-arch)) 
-                (number->string (* 8 
-                    (gdb:type-sizeof (gdb:type-pointer 
-                        (gdb:arch-void-type (gdb:current-arch))))))))
-(define is-riscv64? (string=? arch "riscv64"))
+(define is-riscv64? (string=? (gdb:target-config) "riscv64-elf"))
+(define is-riscv32? (string=? (gdb:target-config) "riscv32-elf"))
+(if is-riscv64? 
+  (display "Target is riscv64\n")
+  (if is-riscv32?
+  (display "Traget is riscv32, which is not supported yet.\n")
+  (display "Unknown target, target must be riscv32/64\n")))
 
 
 (define use-utf8 #t)
@@ -159,7 +160,7 @@ Example:
             (format #t "0x~:@(~x~) ~~ 0x~:@(~x~) => 0x~:@(~x~) ~~ 0x~:@(~x~)"
                 va-start va-end pa-start pa-end)
             (display (list-ref output-lines 2))
-            (print-type type type-separator)
+            (mmu:print-type type type-separator)
             (newline)
         )))
         (pde-walk root-pgdir 0 0 on-dent on-leaf)))
