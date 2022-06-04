@@ -153,7 +153,10 @@ Example:
                 f"Page table root address: {'0x{:016X}'.format(root_pgdir)}")
             if satp_mode != 8:
                 print("Only support SV39 paging mode with mode 8.")
-                return
+                if satp_mode != 0:
+                    return
+                else:
+                    print("Perhaps it's a SBI simulation MMU, continue...")
             root_pgdir = gdb.Value(
                 int(root_pgdir)).cast(u64p)
         else:
